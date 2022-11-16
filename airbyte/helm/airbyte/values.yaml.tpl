@@ -29,9 +29,9 @@ oidc-config:
     clientSecret: {{ .OIDC.ClientSecret }}
     cookieSecret: {{ dedupe . "airbyte.oidc-config.secret.cookieSecret" $prevSecret }}
   service:
-    name: airbyte-oauth2-proxy
-    selector:
-      airbyte: webapp
+    selector: # todo: fix for removing old selector in template
+      app.kubernetes.io/name: webapp
+      app.kubernetes.io/instance: airbyte
   {{ if .Values.users }}
   users:
   {{ toYaml .Values.users | nindent 4 }}
@@ -72,7 +72,7 @@ airbyte:
     {{ end }}
     {{ end }}
     ingress:
-      enabled: true
+      enabled: false
       {{- if eq .Provider "kind" }}
       annotations:
         external-dns.alpha.kubernetes.io/target: "127.0.0.1"
