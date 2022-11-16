@@ -3,15 +3,20 @@ global:
     links:
     - description: airbyte web ui
       url: {{ .Values.hostname }}
-  {{ if ne .Provider "aws" }}
+  {{ if eq .Provider "aws" }}
   logs:
+    accessKey:
+      password: {{ importValue "Terraform" "access_key_id" }}
+    secretKey:
+      password: {{ importValue "Terraform" "secret_access_key" }}
     storage:
-      type: "MINIO"
-  state:
-    storage:
-      type: "MINIO"
+      type: S3
+    s3:
+      enabled: true
+      bucket: {{ .Values.airbyteBucket }}
+      bucketRegion: {{ .Region }}
   {{ end }}
-    
+
 
 {{ if .OIDC }}
 {{ $prevSecret := dedupe . "airbyte.oidcProxy.cookieSecret" (randAlphaNum 32) }}
@@ -56,24 +61,6 @@ postgres:
 {{ end }}
 
 airbyte:
-  airbyteS3Bucket: {{ .Values.airbyteBucket }}
-  {{ if eq .Provider "aws" }}
-  airbyteS3Region: {{ .Region }}
-  {{ end }}
-  minio:
-    accessKey:
-      password: {{ importValue "Terraform" "access_key_id" }}
-    secretKey:
-      password: {{ importValue "Terraform" "secret_access_key" }}
-{{ if eq .Provider "google" }}
-  airbyteS3Endpoint: https://storage.googleapis.com
-{{ end }}
-{{ if eq .Provider "azure" }}
-  airbyteS3Endpoint: https://{{ .Configuration.minio.hostname }}
-{{ end }}
-{{ if eq .Provider "kind" }}
-  airbyteS3Endpoint: http://minio.{{ $minioNamespace }}:9000
-{{ end }}
   webapp:
     {{ if .OIDC }}
     podLabels:
